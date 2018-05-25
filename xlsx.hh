@@ -28,9 +28,9 @@ class XLSX
 	// Get a DOM object of an XML inside the zip
 	void xml_open(const std::string& filename, pugi::xml_document& doc);
 	// Create the dat files
-	void createDat(const pugi::xml_node& node, const unsigned char sheet_nr, std::string* dat_parameters);
+	void createDat(const pugi::xml_node& node, const unsigned char sheet_nr, std::string*const dat_parameters, std::string& last_filename);
 	// Write the dat file on disk
-	const unsigned int writeDat(const std::string& filename, const std::string& dat_stream);
+	const unsigned int writeDat(const std::string& filename, const std::string& dat_stream, const bool append);
 
 public:
 	// Open an xlsx file

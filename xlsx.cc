@@ -87,13 +87,14 @@ void XLSX::parse()
 
 		// array that will contain the dat parameters names
 		std::string dat_parameters[255];
+		std::string last_filename;
 
 		// paramater names are in the first row, let's cache them
-		createDat(sheetData.find_child_by_attribute("r", "1"), i, dat_parameters);
+		createDat(sheetData.find_child_by_attribute("r", "1"), i, dat_parameters, last_filename);
 
 		// generate the dats
 		for (const pugi::xml_node row: sheetData.children()) {
-			createDat(row, i, dat_parameters);
+			createDat(row, i, dat_parameters, last_filename);
 		}
 	}
 }
@@ -144,8 +145,11 @@ void XLSX::xml_open(const std::string& filename, pugi::xml_document& doc)
  * data belongs to
  * @param dat_parameters Pointer to the array that contains
  * the paramaters' names
+ * @param last_filename Pointer to a string that holds the
+ * filename of the previously created file to check if user
+ * wants to append to the same dat
  */
-void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_nr, std::string *const dat_parameters)
+void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_nr, std::string *const dat_parameters, std::string& last_filename)
 {
 	const std::string row_number = row_node.attribute("r").value();
 
@@ -194,9 +198,13 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
 		}
 		// if not build the dat
 		else if ((dat_parameters + column)->size() > 0) {
-			dat_stream << *(dat_parameters + column) << ((dat_parameters + column)->front() == '#' ? " " : "=") << value << std::endl;
+			bool is_filename = (*(dat_parameters + column) == "filename");
 
-			if (*(dat_parameters + column) == "name") {
+			if (!is_filename) {
+				dat_stream << *(dat_parameters + column) << ((dat_parameters + column)->front() == '#' ? " " : "=") << value << std::endl;
+			}
+
+			if (is_filename || (filename.empty() && *(dat_parameters + column) == "name")) {
 				filename = value;
 			}
 		}
@@ -209,6 +217,7 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
 	// don't generate dat for the first row which is reserved for the dat parameters
 	if (row_number != "1") {
 		// std::cout << dat_stream.str() << std::endl;
+		// std::cout << (filename == last_filename) << " : " << filename << " > " << last_filename << std::endl;
 
 		std::string sheet_name = sheets_v[sheet_nr].name;
 
@@ -218,7 +227,7 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
 			pos = sheet_name.find(";");
 		}
 
-		switch (writeDat(sheet_name + "/" + filename, dat_stream.str())) {
+		switch (writeDat(sheet_name + "/" + filename, dat_stream.str(), filename == last_filename)) {
 			default:
 				break;
 			case 1:
@@ -231,6 +240,9 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
 				std::clog << sheets_v[sheet_nr].name << "(" << row_number << ") : File writing warning FDATOUT3:An error happened when writting on file for object " << filename << "! File may be corrupt.\n";
 				break;
 		}
+
+		// time to set this filename as the one to be checked next
+		last_filename = filename;
 	}
 }
 
@@ -242,28 +254,29 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
  *
  * @param filename Name of the file without extension
  * @param dat_stream String containing the whole dat file
+ * @param append Whether it should append to existing file, if not it overwrites
  *
  * @return 0 if no errors
  * @return 1 if no filename was provided
  * @return 2 if file could not be opened
  * @return 3 if writing failed
  */
-const unsigned int XLSX::writeDat(const std::string& filename, const std::string& dat_stream)
+const unsigned int XLSX::writeDat(const std::string& filename, const std::string& dat_stream, const bool append)
 {
-	// std::cout << filename << std::endl;
+	// std::cout << filename << ", append: " << append << std::endl;
 
 	if (filename.length() == 0) {
 		return 1;
 	}
 
 	// open file replacing if it already exists
-	std::ofstream dat_file(filename + ".dat", std::ios::trunc);
+	std::ofstream dat_file(filename + ".dat", (append ? std::ios::app : std::ios::trunc));
 
 	if (!dat_file.is_open()) {
 		return 2;
 	}
 
-	dat_file << dat_stream;
+	dat_file << (append ? "---\n" : "") << dat_stream;
 
 	dat_file.close();
 
