@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])
 	}
 	// if --version was selected
 	if (option > 0 && option != 4) {
-		std::cout << "Simutrans datSheet " << VERSION << "\n   Copyright (c) 2018 Andre' Zanghelini (An_dz)\n   Project homepage: <https://github.com/An-dz/datSheet>\n\nA big thanks to the following libraries:\npugixml <https://pugixml.org>\n   Copyright (c) 2006-2018 Arseny Kapoulkine.\nlibzip <https://libzip.org/>\n   Copyright (c) 1999-2018 Dieter Baron and Thomas Klausner\nlibzip++ <http://hg.markand.fr/libzip>\n   Copyright (c) 2013-2018 David Demelier <markand@malikania.fr>\n";
+		std::cout << "Simutrans datSheet " << VERSION << "\n   Copyright (c) 2018 Andre' Zanghelini (An_dz)\n   Project homepage: <https://github.com/An-dz/datSheet>\n\nA big thanks to the following libraries:\npugixml <https://pugixml.org>\n   Copyright (c) 2006-2018 Arseny Kapoulkine.\nlibzip <https://libzip.org/>\n   Copyright (c) 1999-2018 Dieter Baron and Thomas Klausner\nlibzip++ <http://hg.markand.fr/libzip>\n   Copyright (c) 2013-2018 David Demelier <markand@malikania.fr>\nICU <http://site.icu-project.org/>\n   Copyright (c) 1991-2018 Unicode, Inc. All rights reserved.\n";
 		return EXIT_SUCCESS;
 	}
 
