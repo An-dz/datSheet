@@ -1,6 +1,7 @@
-#include <iostream> // cout, cerr, clog
+#include <iostream> // cout, cerr, clog, endl, ios
 #include <sstream>  // ostringstream
 #include <fstream>  // ofstream
+#include <string>   // string
 #include "xlsx.hh"
 
 /**
@@ -189,7 +190,7 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
 		const unsigned int column_size = column_str.size() - 1;
 		unsigned int column = 0;
 		for (unsigned int i = 0; i <= column_size; ++i) {
-			column = column_str[i] - 'A' + (column_size - i) * 25;
+			column += column_str[i] - 'A' + (column_size - i) * 26;
 		}
 
 		// if we are dealing with the first row we save the parameters for later use
