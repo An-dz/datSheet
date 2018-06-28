@@ -11,3 +11,5 @@ Compiled versions for Linux and Windows are available in the [Releases page](htt
 * [pugixml](https://pugixml.org/)
 * [libzip](https://libzip.org/)
 * [libzip++](http://hg.markand.fr/libzip) (only for compiling)
+* [ICU](http://site.icu-project.org/) (importing)
+* [Windows SDK](https://developer.microsoft.com/windows/downloads/sdk-archive) (Windows)
