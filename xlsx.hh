@@ -1,6 +1,6 @@
 #include <vector>      // vector
-#include <zip.hpp>     // libzip++
-#include <pugixml.hpp> // pugixml
+#include <libzippp\libzippp.h>     // libzip++
+#include "pugixml-1.14/src/pugixml.hpp" // pugixml
 
 /**
  * Parser for Office Open XML xlsx documents
@@ -8,7 +8,7 @@
 class XLSX
 {
 	/** pointer to loaded spreadsheet xlsx file */
-	libzip::archive* sheet;
+	libzippp::ZipArchive *sheet;
 	/** XML DOM node that holds the strings in the xlsx */
 	pugi::xml_node strings_xml;
 	/** structure that holds important sheet data

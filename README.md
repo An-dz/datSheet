@@ -10,6 +10,8 @@ Compiled versions for Linux and Windows are available in the [Releases page](htt
 
 * [pugixml](https://pugixml.org/)
 * [libzip](https://libzip.org/)
-* [libzip++](http://hg.markand.fr/libzip) (only for compiling)
+* [libzippp] (libzip++ does no longer exist it seems)
 * [ICU](http://site.icu-project.org/) (importing)
 * [Windows SDK](https://developer.microsoft.com/windows/downloads/sdk-archive) (Windows)
+
+To compile with MSVC, you just need to enable the VCPKG manifest and download the pugixml source files to an folder (and maybe change the include path).

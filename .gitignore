@@ -31,3 +31,8 @@
 *.out
 *.app
 datSheet
+
+Debug
+.vs
+pugixml-1.14
+vcpkg_installed

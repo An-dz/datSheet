@@ -28,13 +28,14 @@
 Importer::Importer(const std::string& filename)
 {
 	try {
+		this->sheet = new libzippp::ZipArchive(filename);
 		// open as writeable and replace everything
-		this->sheet = new libzip::archive(filename, ZIP_CREATE | ZIP_TRUNCATE);
-		this->sheet->mkdir("_rels");
-		this->sheet->mkdir("docProps");
-		this->sheet->mkdir("xl");
-		this->sheet->mkdir("xl/_rels");
-		this->sheet->mkdir("xl/worksheets");
+		this->sheet->open(libzippp::ZipArchive::Write);
+		this->sheet->addEntry("_rels");
+		this->sheet->addEntry("docProps");
+		this->sheet->addEntry("xl");
+		this->sheet->addEntry("xl/_rels");
+		this->sheet->addEntry("xl/worksheets");
 		return;
 	}
 	catch (const std::runtime_error& e) {
@@ -52,6 +53,7 @@ Importer::Importer(const std::string& filename)
  */
 Importer::~Importer()
 {
+	sheet->close();
 	delete sheet;
 }
 
@@ -108,7 +110,8 @@ bool Importer::convertToUTF8(const std::string& input, std::stringstream& output
 	// Simutrans dat files are mostly ASCII, only comments can have special chars
 	// so twice the size is probably more than enough
 	size_t max_size = input.length() * 2;
-	char converted[max_size];
+	char *converted = new char(max_size);
+//	char converted[max_size];
 
 	// convert to UTF-8
 	max_size = ucnv_toAlgorithmic(UCNV_UTF8, enc_cnv, converted, max_size, input.c_str(), input.length(), &enc_status);
@@ -368,7 +371,8 @@ void Importer::createSheet(const std::vector<std::string>& dats, const std::stri
 	std::string sheet_name("xl/worksheets/sheet" + std::to_string(index) + ".xml");
 	std::ostringstream buffer;
 	doc.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), sheet_name, ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), sheet_name, ZIP_FL_ENC_UTF_8);
+	sheet->addData(sheet_name, buffer.str().c_str(), buffer.str().size());
 }
 
 /**
@@ -421,12 +425,12 @@ void Importer::readDir(const std::string& dir_name, unsigned int& index)
 #ifdef _WIN32
 	// Windows only
 	HANDLE dir;
-	WIN32_FIND_DATA ent;
+	WIN32_FIND_DATAA ent;
 	char find_term[2048];
 	std::snprintf(find_term, 2048, "%s/*", dir_name.c_str());
 
 	// try starting it up and fail if no handle found
-	if ((dir = FindFirstFile(find_term, &ent)) == INVALID_HANDLE_VALUE) {
+	if ((dir = FindFirstFileA(find_term, &ent)) == INVALID_HANDLE_VALUE) {
 		std::ostringstream err_msg;
 		err_msg << "WRD" << errno << ":" << strerror(errno);
 		throw std::runtime_error(err_msg.str());
@@ -447,7 +451,7 @@ void Importer::readDir(const std::string& dir_name, unsigned int& index)
 				dats.push_back(std::string(ent.cFileName, std::strlen(ent.cFileName)));
 			}
 		}
-	} while (FindNextFile(dir, &ent));
+	} while (FindNextFileA(dir, &ent));
 
 	FindClose(dir);
 #else
@@ -539,7 +543,8 @@ void Importer::import(const std::string& root_dir)
 	 * Defines where the properties and the workbook are
 	 */
 	std::ostringstream buffer("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" Target=\"docProps/app.xml\"/><Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties\" Target=\"docProps/core.xml\"/><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>");
-	sheet->add(libzip::source_buffer(buffer.str()), "_rels/.rels", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "_rels/.rels", ZIP_FL_ENC_UTF_8);
+	sheet->addData("_rels/.rels", buffer.str().c_str(), buffer.str().size());
 
 	buffer.str("");
 	pugi::xml_node node1, node2, node3;
@@ -565,7 +570,8 @@ void Importer::import(const std::string& root_dir)
 	}
 
 	shared.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "xl/sharedStrings.xml", ZIP_FL_ENC_UTF_8);
+	//sheet->add(libzip::source_buffer(buffer.str()), "xl/sharedStrings.xml", ZIP_FL_ENC_UTF_8);
+	sheet->addData("xl/sharedStrings.xml", buffer.str().c_str(), buffer.str().size());
 	buffer.str("");
 
 	/*
@@ -600,7 +606,8 @@ void Importer::import(const std::string& root_dir)
 	attr.set_value("sharedStrings.xml");
 
 	workbook_rels.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "xl/_rels/workbook.xml.rels", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "xl/_rels/workbook.xml.rels", ZIP_FL_ENC_UTF_8);
+	sheet->addData("xl/_rels/workbook.xml.rels", buffer.str().c_str(), buffer.str().size());
 	buffer.str("");
 
 	/*
@@ -659,7 +666,8 @@ void Importer::import(const std::string& root_dir)
 	}
 
 	types.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "[Content_Types].xml", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "[Content_Types].xml", ZIP_FL_ENC_UTF_8);
+	sheet->addData("[Content_Types].xml", buffer.str().c_str(), buffer.str().size());
 	buffer.str("");
 
 	/*
@@ -688,7 +696,8 @@ void Importer::import(const std::string& root_dir)
 	}
 
 	workbook.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "xl/workbook.xml", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "xl/workbook.xml", ZIP_FL_ENC_UTF_8);
+	sheet->addData("xl/workbook.xml", buffer.str().c_str(), buffer.str().size());
 	buffer.str("");
 
 	/*
@@ -762,7 +771,8 @@ void Importer::import(const std::string& root_dir)
 	node2.set_value(VERSION);
 
 	app.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "docProps/app.xml", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "docProps/app.xml", ZIP_FL_ENC_UTF_8);
+	sheet->addData("docProps/app.xml", buffer.str().c_str(), buffer.str().size());
 	buffer.str("");
 
 	/*
@@ -820,5 +830,6 @@ void Importer::import(const std::string& root_dir)
 	node2.set_value(time);
 
 	core.save(buffer, "", pugi::format_raw);
-	sheet->add(libzip::source_buffer(buffer.str()), "docProps/core.xml", ZIP_FL_ENC_UTF_8);
+//	sheet->add(libzip::source_buffer(buffer.str()), "docProps/core.xml", ZIP_FL_ENC_UTF_8);
+	sheet->addData("docProps/core.xml", buffer.str().c_str(), buffer.str().size());
 }
