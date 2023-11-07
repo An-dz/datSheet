@@ -16,7 +16,8 @@ XLSX::XLSX(const std::string& filename)
 {
 	try {
 		// open as read-only
-		this->sheet = new libzip::archive(filename, ZIP_RDONLY);
+		this->sheet = new libzippp::ZipArchive(filename);
+		sheet->open(libzippp::ZipArchive::ReadOnly);
 		return;
 	}
 	catch (const std::runtime_error& e) {
@@ -55,10 +56,9 @@ void XLSX::parse()
 
 	// get sheets id and name and put in vector
 	for (const pugi::xml_node sheet: doc.child("workbook").child("sheets").children()) {
-		sheet_t sheet_info = {
-			id: sheet.attribute("r:id").value(),
-			name: sheet.attribute("name").value()
-		};
+		sheet_t sheet_info;
+		sheet_info.id = sheet.attribute("r:id").value();
+		sheet_info.name = sheet.attribute("name").value();
 		sheets_v.push_back(sheet_info);
 	}
 
@@ -112,7 +112,8 @@ void XLSX::parse()
 void XLSX::xml_open(const std::string& filename, pugi::xml_document& doc)
 {
 	try {
-		const std::string xml_data = sheet->open(filename).read(sheet->stat(filename).size);
+		libzippp::ZipEntry ze = sheet->getEntry(filename);
+		const std::string xml_data = ze.readAsText();
 		const pugi::xml_parse_result result = doc.load_string(xml_data.c_str());
 
 		if (!result) {
@@ -262,9 +263,12 @@ void XLSX::createDat(const pugi::xml_node& row_node, const unsigned char sheet_n
  * @return 2 if file could not be opened
  * @return 3 if writing failed
  */
-const unsigned int XLSX::writeDat(const std::string& filename, const std::string& dat_stream, const bool append)
+const unsigned int XLSX::writeDat(const std::string& filenames, const std::string& dat_stream, const bool append)
 {
 	// std::cout << filename << ", append: " << append << std::endl;
+	int i = 0;
+	while (filenames[i] == '/') i++;
+	std::string filename = filenames.c_str() + i;
 
 	if (filename.length() == 0) {
 		return 1;

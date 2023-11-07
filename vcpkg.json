@@ -1,0 +1,9 @@
+{
+    "name": "datsheet-test",
+    "version-string": "1.0.0",
+    "dependencies": [
+        "libzip",
+        "libzippp",
+        "icu"
+    ]
+}

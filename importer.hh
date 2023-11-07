@@ -1,6 +1,6 @@
 #include <vector>      // vector
-#include <zip.hpp>     // libzip++
-#include <pugixml.hpp> // pugixml
+#include <libzippp\libzippp.h>     // libzip++
+#include "pugixml-1.14/src/pugixml.hpp" // pugixml
 
 #define VERSION "1.2.0"
 
@@ -10,7 +10,7 @@
 class Importer
 {
 	/** pointer to loaded spreadsheet xlsx file */
-	libzip::archive* sheet;
+	libzippp::ZipArchive *sheet;
 	/** xlsx sharedStrings file */
 	std::vector<std::string> sharedStrings;
 	/** name for the worksheets */
